@@ -1,0 +1,4 @@
+aiohttp
+pillow
+numpy
+pygame
