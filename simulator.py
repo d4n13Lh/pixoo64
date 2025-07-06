@@ -152,11 +152,11 @@ class Pixoo64Simulator:
             if command == 'Draw/SendHttpGif':
                 await self._handle_send_gif(data)
             
-            return web.Response(text='{"error_code":0}')
+            return web.json_response({"error_code": 0})
             
         except Exception as e:
             logger.error(f"Error handling request: {e}")
-            return web.Response(text='{"error_code":1}', status=500)
+            return web.json_response({"error_code": 1}, status=500)
             
     async def _handle_send_gif(self, data: Dict[str, Any]) -> None:
         """
