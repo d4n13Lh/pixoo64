@@ -5,14 +5,12 @@ This module provides functionality to control a Divoom Pixoo64 display device,
 including drawing primitives, animations, and device control commands.
 """
 
-import asyncio
-import base64
 from typing import List, Optional, Tuple
 
 import aiohttp
-from PIL import Image, ImageSequence
+import base64
 
-from simulator import Pixoo64Simulator
+from PIL import Image, ImageSequence
 
 
 class Pixoo64Animation:
