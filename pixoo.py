@@ -69,21 +69,22 @@ class DivoomPixoo64:
         Args:
             ip_address: IP address of the device
             port: Port number (default: 80)
+            initial_pic_id: Starting pic_id value (default: 0)
         """
         self.ip_address = ip_address
         self.base_url = f"http://{ip_address}:{port}"
-        self.buffer_width = 64
-        self._pic_id_counter = initial_pic_id
+        self._pixel_count_xy = 64
+        self._current_pic_id = initial_pic_id
         self._init_buffer()
         
     def _init_buffer(self) -> None:
         """Initialize the internal frame buffer."""
-        self._buffer = Image.new('RGB', (self.buffer_width, self.buffer_width), (0, 0, 0))
+        self._buffer = Image.new('RGB', (self._pixel_count_xy, self._pixel_count_xy), (0, 0, 0))
 
     def _get_next_pic_id(self) -> int:
         """Get the next available pic_id."""
-        self._pic_id_counter += 1
-        return self._pic_id_counter
+        self._current_pic_id += 1
+        return self._current_pic_id
 
     def set_pixel(self, x: int, y: int, color: Tuple[int, int, int]) -> None:
         """
@@ -97,7 +98,7 @@ class DivoomPixoo64:
         Raises:
             ValueError: If coordinates are out of bounds
         """
-        if 0 <= x < self.buffer_width and 0 <= y < self.buffer_width:
+        if 0 <= x < self._pixel_count_xy and 0 <= y < self._pixel_count_xy:
             self._buffer.putpixel((x, y), color)
         else:
             raise ValueError(f"Pixel coordinates out of bounds: ({x}, {y})")
@@ -109,7 +110,7 @@ class DivoomPixoo64:
         Args:
             color: (R, G, B) tuple (default: black)
         """
-        self._buffer.paste(color, (0, 0, self.buffer_width, self.buffer_width))
+        self._buffer.paste(color, (0, 0, self._pixel_count_xy, self._pixel_count_xy))
 
     async def flush_buffer(self, pic_id: Optional[int] = None, frame_delay: int = 100) -> None:
         """
@@ -122,7 +123,7 @@ class DivoomPixoo64:
         if pic_id is None:
             pic_id = self._get_next_pic_id()
         frame_data = self._buffer.tobytes()
-        animation = Pixoo64Animation([frame_data], frame_delay, self.buffer_width)
+        animation = Pixoo64Animation([frame_data], frame_delay, self._pixel_count_xy)
         await self.display_animation(animation, pic_id)
 
     async def send_command(self, payload: dict) -> dict:
@@ -335,7 +336,7 @@ class DivoomPixoo64:
                 for x_off in range(-radius, radius + 1):
                     if x_off * x_off + y_off * y_off <= radius * radius:
                         px, py = cx + x_off, cy + y_off
-                        if 0 <= px < self.buffer_width and 0 <= py < self.buffer_width:
+                        if 0 <= px < self._pixel_count_xy and 0 <= py < self._pixel_count_xy:
                             self.set_pixel(px, py, fill_color)
         # Midpoint circle algorithm for outline
         x = radius
@@ -354,7 +355,7 @@ class DivoomPixoo64:
                 x -= 1
                 d += 2 * (y - x) + 1
         for px, py in outline_points:
-            if 0 <= px < self.buffer_width and 0 <= py < self.buffer_width:
+            if 0 <= px < self._pixel_count_xy and 0 <= py < self._pixel_count_xy:
                 self.set_pixel(px, py, outline_color)
 
     def draw_rectangle(self, x0: int, y0: int, x1: int, y1: int,
@@ -375,15 +376,15 @@ class DivoomPixoo64:
         if fill_color is not None:
             for y in range(min(y0, y1) + 1, max(y0, y1)):
                 for x in range(min(x0, x1) + 1, max(x0, x1)):
-                    if 0 <= x < self.buffer_width and 0 <= y < self.buffer_width:
+                    if 0 <= x < self._pixel_count_xy and 0 <= y < self._pixel_count_xy:
                         self.set_pixel(x, y, fill_color)
         # Outline
         for x in range(min(x0, x1), max(x0, x1) + 1):
             for y in [min(y0, y1), max(y0, y1)]:
-                if 0 <= x < self.buffer_width and 0 <= y < self.buffer_width:
+                if 0 <= x < self._pixel_count_xy and 0 <= y < self._pixel_count_xy:
                     self.set_pixel(x, y, outline_color)
         for y in range(min(y0, y1), max(y0, y1) + 1):
             for x in [min(x0, x1), max(x0, x1)]:
-                if 0 <= x < self.buffer_width and 0 <= y < self.buffer_width:
+                if 0 <= x < self._pixel_count_xy and 0 <= y < self._pixel_count_xy:
                     self.set_pixel(x, y, outline_color)
 
